@@ -13,7 +13,8 @@ class WOFPlayer():
     def __str__(self):
         return '{} (${})'.format(self.name, self.prizeMoney)
     
-    class WOFHumanPlayer(WOFPlayer):
+# WOFHumanPlayer class definition 
+class WOFHumanPlayer(WOFPlayer):
         
     def getMove(self, category, obscuredPhrase, guessed):
         print("""{} has ${}\n Category: {}\n Phrase:  {} \n
