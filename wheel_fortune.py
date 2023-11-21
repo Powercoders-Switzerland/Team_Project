@@ -260,4 +260,19 @@ while True:
                 break
             else:
                 print('{} was not the phrase'.format(move))
+    # Move on to the next player (or go back to player[0] if we reached the end)
+    playerIndex = (playerIndex + 1) % len(players)
+
+if winner:
+    # In your head, you should hear this as being announced by a game show host
+    print('{} wins! The phrase was {}'.format(winner.name, phrase))
+    print('{} won ${}'.format(winner.name, winner.prizeMoney))
+    if len(winner.prizes) > 0:
+        print('{} also won:'.format(winner.name))
+        for prize in winner.prizes:
+            print('    - {}'.format(prize))
+else:
+    print('Nobody won. The phrase was {}'.format(phrase))
+
+         
 
