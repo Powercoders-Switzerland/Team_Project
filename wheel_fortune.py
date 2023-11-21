@@ -12,7 +12,7 @@ class WOFPlayer():
         self.prizes.append(prize)
     def __str__(self):
         return '{} (${})'.format(self.name, self.prizeMoney)
-    
+   
 # WOFHumanPlayer class definition 
 class WOFHumanPlayer(WOFPlayer):
         
@@ -21,7 +21,7 @@ class WOFHumanPlayer(WOFPlayer):
         Guessed: {}""".format(self.name, self.prizeMoney, category, obscuredPhrase, guessed))
         return input("Guess a letter, phrase, or type 'exit' or 'pass':")
         
-# WOFComputerPlayer class definition 
+# WOFComputerPlayer class definition
 class WOFComputerPlayer(WOFPlayer):
              
     SORTED_FREQUENCIES = 'ZQXJKVBPYGFWMUCLDRHSNIOATE'
@@ -60,7 +60,11 @@ class WOFComputerPlayer(WOFPlayer):
                      return L
         else:
              return random.choice(self.getPossibleLetters(guessed))
-        
+         
+
+#import sys
+#sys.setExecutionLimit(600000) # let this take up to 10 minutes
+
 import json
 import random
 import time
@@ -98,6 +102,7 @@ def spinWheel():
     with open("wheel.json", 'r') as f:
         wheel = json.loads(f.read())
         return random.choice(wheel)
+
 # Returns a category & phrase (as a tuple) to guess
 # Example:
 #     ("Artist & Song", "Whitney Houston's I Will Always Love You")
@@ -166,4 +171,93 @@ guessed = []
 playerIndex = 0
 
 # will be set to the player instance when/if someone wins
-winner = False
+def requestPlayerMove(player, category, guessed):
+    while True: # we're going to keep asking the player for a move until they give a valid one
+        time.sleep(0.1) # added so that any feedback is printed out before the next prompt
+
+        move = player.getMove(category, obscurePhrase(phrase, guessed), guessed)
+        move = move.upper() # convert whatever the player entered to UPPERCASE
+        if move == 'EXIT' or move == 'PASS':
+            return move
+        elif len(move) == 1: # they guessed a character
+            if move not in LETTERS: # the user entered an invalid letter (such as @, #, or $)
+                print('Guesses should be letters. Try again.')
+                continue
+            elif move in guessed: # this letter has already been guessed
+                print('{} has already been guessed. Try again.'.format(move))
+                continue
+            elif move in VOWELS and player.prizeMoney < VOWEL_COST: # if it's a vowel, we need to be sure the player has enough
+                    print('Need ${} to guess a vowel. Try again.'.format(VOWEL_COST))
+                    continue
+            else:
+                return move
+        else: # they guessed the phrase
+            return move
+
+
+while True:
+    player = players[playerIndex]
+    wheelPrize = spinWheel()
+
+    print('')
+    print('-'*15)
+    print(showBoard(category, obscurePhrase(phrase, guessed), guessed))
+    print('')
+    print('{} spins...'.format(player.name))
+    time.sleep(2) # pause for dramatic effect!
+    print('{}!'.format(wheelPrize['text']))
+    time.sleep(1) # pause again for more dramatic effect!
+
+    if wheelPrize['type'] == 'bankrupt':
+        player.goBankrupt()
+    elif wheelPrize['type'] == 'loseturn':
+        pass # do nothing; just move on to the next player
+    elif wheelPrize['type'] == 'cash':
+        move = requestPlayerMove(player, category, guessed)
+        if move == 'EXIT': # leave the game
+            print('Until next time!')
+            break
+        elif move == 'PASS': # will just move on to next player
+            print('{} passes'.format(player.name))
+        elif len(move) == 1: # they guessed a letter
+            guessed.append(move)
+
+            print('{} guesses "{}"'.format(player.name, move))
+
+            if move in VOWELS:
+                player.prizeMoney -= VOWEL_COST
+
+            count = phrase.count(move) # returns an integer with how many times this letter appears
+            if count > 0:
+                if count == 1:
+                    print("There is one {}".format(move))
+                else:
+                    print("There are {} {}'s".format(count, move))
+
+                # Give them the money and the prizes
+                player.addMoney(count * wheelPrize['value'])
+                if wheelPrize['prize']:
+                    player.addPrize(wheelPrize['prize'])
+
+                # all of the letters have been guessed
+                if obscurePhrase(phrase, guessed) == phrase:
+                    winner = player
+                    break
+
+                continue # this player gets to go again
+
+            elif count == 0:
+                print("There is no {}".format(move))
+        else: # they guessed the whole phrase
+            if move == phrase: # they guessed the full phrase correctly
+                winner = player
+
+                # Give them the money and the prizes
+                player.addMoney(wheelPrize['value'])
+                if wheelPrize['prize']:
+                    player.addPrize(wheelPrize['prize'])
+
+                break
+            else:
+                print('{} was not the phrase'.format(move))
+
