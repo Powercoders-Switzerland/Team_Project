@@ -171,8 +171,6 @@ guessed = []
 playerIndex = 0
 
 # will be set to the player instance when/if someone wins
-winner = False
-
 def requestPlayerMove(player, category, guessed):
     while True: # we're going to keep asking the player for a move until they give a valid one
         time.sleep(0.1) # added so that any feedback is printed out before the next prompt
@@ -262,3 +260,4 @@ while True:
                 break
             else:
                 print('{} was not the phrase'.format(move))
+
