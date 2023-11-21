@@ -98,3 +98,72 @@ def spinWheel():
     with open("wheel.json", 'r') as f:
         wheel = json.loads(f.read())
         return random.choice(wheel)
+# Returns a category & phrase (as a tuple) to guess
+# Example:
+#     ("Artist & Song", "Whitney Houston's I Will Always Love You")
+def getRandomCategoryAndPhrase():
+    with open("phrases.json", 'r') as f:
+        phrases = json.loads(f.read())
+
+        category = random.choice(list(phrases.keys()))
+        phrase   = random.choice(phrases[category])
+        return (category, phrase.upper())
+
+# Given a phrase and a list of guessed letters, returns an obscured version
+# Example:
+#     guessed: ['L', 'B', 'E', 'R', 'N', 'P', 'K', 'X', 'Z']
+#     phrase:  "GLACIER NATIONAL PARK"
+#     returns> "_L___ER N____N_L P_RK"
+def obscurePhrase(phrase, guessed):
+    rv = ''
+    for s in phrase:
+        if (s in LETTERS) and (s not in guessed):
+            rv = rv+'_'
+        else:
+            rv = rv+s
+    return rv
+
+# Returns a string representing the current state of the game
+def showBoard(category, obscuredPhrase, guessed):
+    return """
+Category: {}
+Phrase:   {}
+Guessed:  {}""".format(category, obscuredPhrase, ', '.join(sorted(guessed)))
+
+# GAME LOGIC CODE
+print('='*15)
+print('WHEEL OF PYTHON')
+print('='*15)
+print('')
+
+num_human = getNumberBetween('How many human players?', 0, 10)
+
+# Create the human player instances
+human_players = [WOFHumanPlayer(input('Enter the name for human player #{}'.format(i+1))) for i in range(num_human)]
+
+num_computer = getNumberBetween('How many computer players?', 0, 10)
+
+# If there are computer players, ask how difficult they should be
+if num_computer >= 1:
+    difficulty = getNumberBetween('What difficulty for the computers? (1-10)', 1, 10)
+
+# Create the computer player instances
+computer_players = [WOFComputerPlayer('Computer {}'.format(i+1), difficulty) for i in range(num_computer)]
+
+players = human_players + computer_players
+
+# No players, no game :(
+if len(players) == 0:
+    print('We need players to play!')
+    raise Exception('Not enough players')
+
+# category and phrase are strings.
+category, phrase = getRandomCategoryAndPhrase()
+# guessed is a list of the letters that have been guessed
+guessed = []
+
+# playerIndex keeps track of the index (0 to len(players)-1) of the player whose turn it is
+playerIndex = 0
+
+# will be set to the player instance when/if someone wins
+winner = False
